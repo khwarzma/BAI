@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C++ Build outputs & Binary files
+build/
+bin/
+lib/
+*.o
+*.so
+*.a
+*.out
+*.exe
+
+# Models & Dynamic Weights (Keep raw specifications only)
+*.bai
+*.onnx
+*.pt
+*.pth
+*.bin
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data Traces & Checkpoints (Temporary Colab / Local outputs)
+data/processed/
+data/raw/
+training/checkpoints/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary Copilot Output Buffer (keep prompt.md / fix.md, ignore dynamic outputs)
+.copilot/*/output.txt

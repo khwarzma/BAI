@@ -1,0 +1,84 @@
+KHWARZMA SOURCE-AVAILABLE PUBLIC LICENSE
+Version 1.0 — August 2026
+
+Copyright (c) 2026 Khwarzma (خوارزمة). All Rights Reserved.
+
+Project: BAI (Bareeed Artificial Intelligence) — Core Engine v1.0
+Owner & Licensor: Khwarzma (خوارزمة)
+Target Platform: Bareeed Infrastructure
+
+===============================================================================
+PREAMBLE AND PHILOSOPHY
+===============================================================================
+
+This License governs the access, inspection, and non-commercial usage of the
+BAI (Bareeed Artificial Intelligence) source code, binary artifacts, machine
+learning models, and architectural specifications provided by Khwarzma.
+
+This is a SOURCE-AVAILABLE license, NOT an Open Source license. It is designed
+to allow community evaluation, educational study, code auditing, and security
+verification while strictly securing all commercial, operational, and
+competitive rights exclusively for Khwarzma and its authorized applications
+including the Bareeed platform.
+
+===============================================================================
+2. PERMITTED USES (NON-COMMERCIAL GRANT)
+Subject to the terms of this License, Khwarzma hereby grants to any person or
+entity obtaining a copy of this software and associated documentation files
+(the "Software") a non-exclusive, non-transferable, royalty-free right to:
+
+a) Inspect, view, read, and audit the source code for educational, academic,
+security research, and architectural evaluation purposes.
+b) Compile, build, and execute the Software strictly within isolated, non-production,
+local development or sandbox environments.
+c) Propose modifications or submit pull requests to the official Khwarzma
+repository for evaluation by the Licensor.
+
+===============================================================================
+3. PROHIBITED USES (COMMERCIAL AND COMPETITIVE RESTRICTIONS)
+Under no circumstances may you execute any of the following restricted actions
+without a prior, explicit written commercial license from Khwarzma:
+
+a) PRODUCTION DEPLOYMENT: You MAY NOT run, deploy, embed, or integrate the
+Software (or derivative works based upon it) within any live production
+environment, commercial server, email delivery network, SaaS platform,
+or enterprise web infrastructure.
+b) COMPETITIVE USE: You MAY NOT use the Software, its underlying C++ engine,
+tokenizer data structures, quantized model weights (.bai), or fine-tuning
+architectures to build, offer, host, or power any product or service that
+competes directly or indirectly with the Bareeed email platform or any
+commercial offering by Khwarzma.
+c) COMMERCIAL DISTRIBUTION: You MAY NOT sell, sub-license, lease, rent,
+monetize, or charge fees for access to the Software or any modifications,
+wrappers, or distributions derived from it.
+d) RE-LICENSING AND RE-BRANDING: You MAY NOT remove, alter, or obfuscate any
+copyright notices, trademark references, or license terms, nor may you
+re-license the Software under any Open Source license (including but not
+limited to GPL, MIT, Apache, BSD, or BSL).
+
+===============================================================================
+4. INTELLECTUAL PROPERTY AND RESERVATION OF RIGHTS
+All right, title, interest, ownership, and intellectual property rights in and
+to the Software, including all patents, copyrights, trademarks, dataset structures,
+and machine learning model parameters, shall remain permanently and exclusively
+vested in Khwarzma.
+
+No rights are granted by implication, estoppel, or otherwise, except for the
+express permissions defined in Section 2.
+
+===============================================================================
+5. DISCLAIMER OF WARRANTY AND LIMITATION OF LIABILITY
+THIS SOFTWARE IS PROVIDED BY KHWARZMA "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL KHWARZMA OR ITS CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES,
+OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+===============================================================================
+6. COMMERCIAL LICENSING ENQUIRIES
+For commercial deployment authorizations, enterprise licensing options, or
+custom partnership inquiries, please contact Khwarzma directly via official
+corporate channels.
