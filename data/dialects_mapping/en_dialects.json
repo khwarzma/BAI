@@ -1,0 +1,220 @@
+{
+  "language": "en",
+  "dialect_count": 10,
+  "version": "1.0.0",
+  "description": "Canonical mappings for 10 English dialects with region codes and structural features",
+  "dialects": {
+    "en-US": {
+      "id": "en-US",
+      "name": "American English",
+      "region": "United States",
+      "region_code": "US",
+      "iso_code": "en-US",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 280000000,
+      "classification": "major",
+      "description": "American English with rhotic pronunciation and modern vocabulary"
+    },
+    "en-GB": {
+      "id": "en-GB",
+      "name": "British English",
+      "region": "United Kingdom",
+      "region_code": "GB",
+      "iso_code": "en-GB",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 70000000,
+      "classification": "major",
+      "description": "British English with non-rhotic RP pronunciation and traditional vocabulary"
+    },
+    "en-CA": {
+      "id": "en-CA",
+      "name": "Canadian English",
+      "region": "Canada",
+      "region_code": "CA",
+      "iso_code": "en-CA",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 25000000,
+      "classification": "major",
+      "description": "Canadian English with North American features and British spelling influences"
+    },
+    "en-AU": {
+      "id": "en-AU",
+      "name": "Australian English",
+      "region": "Australia",
+      "region_code": "AU",
+      "iso_code": "en-AU",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 20000000,
+      "classification": "major",
+      "description": "Australian English with unique accent and colloquialisms"
+    },
+    "en-IN": {
+      "id": "en-IN",
+      "name": "Indian English",
+      "region": "India",
+      "region_code": "IN",
+      "iso_code": "en-IN",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 125000000,
+      "classification": "major",
+      "description": "Indian English with South Asian phonology and unique vocabulary"
+    },
+    "en-SG": {
+      "id": "en-SG",
+      "name": "Singaporean English",
+      "region": "Singapore",
+      "region_code": "SG",
+      "iso_code": "en-SG",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 4000000,
+      "classification": "regional",
+      "description": "Singaporean English (Singlish) with multicultural influences and unique syntax"
+    },
+    "en-NZ": {
+      "id": "en-NZ",
+      "name": "New Zealand English",
+      "region": "New Zealand",
+      "region_code": "NZ",
+      "iso_code": "en-NZ",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 4500000,
+      "classification": "regional",
+      "description": "New Zealand English (Kiwi) with Australian-like features and unique vowel shifts"
+    },
+    "en-IE": {
+      "id": "en-IE",
+      "name": "Irish English",
+      "region": "Ireland",
+      "region_code": "IE",
+      "iso_code": "en-IE",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 5000000,
+      "classification": "regional",
+      "description": "Irish English with Celtic influences and distinctive phonology"
+    },
+    "en-ZA": {
+      "id": "en-ZA",
+      "name": "South African English",
+      "region": "South Africa",
+      "region_code": "ZA",
+      "iso_code": "en-ZA",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 8000000,
+      "classification": "regional",
+      "description": "South African English with multilingual influences and unique accent"
+    },
+    "en-PH": {
+      "id": "en-PH",
+      "name": "Philippine English",
+      "region": "Philippines",
+      "region_code": "PH",
+      "iso_code": "en-PH",
+      "script": "Latin",
+      "direction": "ltr",
+      "speaker_population": 65000000,
+      "classification": "regional",
+      "description": "Philippine English with American influence and unique vocabulary"
+    }
+  },
+  "structural_features": {
+    "en-US": {
+      "spelling_variant": "american",
+      "vocabulary_features": ["color", "organize", "realize"],
+      "phonetic_features": ["rhotic", "non_preglottalized_stops"],
+      "grammar_features": ["prescriptive_fewer_vs_less"]
+    },
+    "en-GB": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["colour", "organise", "realise"],
+      "phonetic_features": ["non_rhotic", "received_pronunciation"],
+      "grammar_features": ["collective_verb_agreement_variation"]
+    },
+    "en-CA": {
+      "spelling_variant": "canadian",
+      "vocabulary_features": ["colour", "organize", "toque", "eh"],
+      "phonetic_features": ["canadian_raising", "rhotic", "north_american_features"],
+      "grammar_features": ["will_shall_usage"]
+    },
+    "en-AU": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["mate", "shrimp", "arvo", "servo"],
+      "phonetic_features": ["intrusive_r", "broad_accent"],
+      "grammar_features": ["australian_slang_integration"]
+    },
+    "en-IN": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["uncle_auntie_usage", "prepone", "backside"],
+      "phonetic_features": ["retroflex_consonants", "prosodic_patterns"],
+      "grammar_features": ["present_perfect_overuse", "auxiliary_verb_variation"]
+    },
+    "en-SG": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["lah", "lor", "leh", "malay_english_code_mixing"],
+      "phonetic_features": ["non_rhotic", "code_switching_phonology"],
+      "grammar_features": ["topic_prominent", "particle_usage", "verb_optionality"]
+    },
+    "en-NZ": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["bach", "jandals", "dairy_shop", "sweet_as"],
+      "phonetic_features": ["nonrhotic", "vowel_shifts", "near_merge"],
+      "grammar_features": ["australian_influenced_slang"]
+    },
+    "en-IE": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["craic", "grand", "banshee", "shebeen"],
+      "phonetic_features": ["irish_english_melody", "velar_fricative_variation"],
+      "grammar_features": ["after_perfect_construction"]
+    },
+    "en-ZA": {
+      "spelling_variant": "british",
+      "vocabulary_features": ["lekker", "hectic", "just_now", "bakkie"],
+      "phonetic_features": ["non_rhotic", "south_african_accent", "afrikaans_influence"],
+      "grammar_features": ["multilingual_code_switching"]
+    },
+    "en-PH": {
+      "spelling_variant": "american",
+      "vocabulary_features": ["jeepney", "putok", "vice_ganda", "tagalog_english_code_mixing"],
+      "phonetic_features": ["american_influenced", "non_rhotic_variation"],
+      "grammar_features": ["subject_drop", "particle_usage"]
+    }
+  },
+  "normalization": {
+    "unicode_normalization": "NFKC",
+    "case_handling": "case_insensitive",
+    "punctuation_handling": "normalize_quotes_and_dashes",
+    "contraction_expansion": "preserve_or_expand",
+    "common_replacements": {
+      "british_american_spellings": {
+        "colour": "color",
+        "favour": "favor",
+        "honour": "honor",
+        "organise": "organize",
+        "realise": "realize"
+      },
+      "apostrophe_variants": ["'", "'", "′"],
+      "quote_variants": ["\"", """, """, "«", "»"]
+    }
+  },
+  "subword_indicators": {
+    "en_token_prefix": "▁",
+    "common_otp_markers": ["verify", "confirm", "code", "password", "pin", "otp", "token"],
+    "common_slang_markers": ["gonna", "wanna", "kinda", "gotta", "ain't"],
+    "dialect_specific_markers": {
+      "en-US": ["y'all", "gonna", "color"],
+      "en-GB": ["innit", "cheers", "colour"],
+      "en-AU": ["mate", "arvo", "shrimp"],
+      "en-IN": ["sir", "madam", "uncle", "aunty"],
+      "en-SG": ["lah", "lor", "leh"],
+      "en-PH": ["po", "ate", "kuya"]
+    }
+  }
+}

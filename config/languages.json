@@ -1,0 +1,97 @@
+
+{
+  "system": {
+    "default_language": "en",
+    "supported_languages": ["ar", "en"],
+    "version": "1.0.0"
+  },
+  "languages": {
+    "ar": {
+      "name": "Arabic",
+      "code": "ar",
+      "script": "Arabic",
+      "direction": "rtl",
+      "tokenizer": "bai_arabic_tokenizer",
+      "detection_threshold": 0.75,
+      "dialect_count": 19,
+      "description": "Modern Standard Arabic (MSA) and 19 regional dialects"
+    },
+    "en": {
+      "name": "English",
+      "code": "en",
+      "script": "Latin",
+      "direction": "ltr",
+      "tokenizer": "bai_english_tokenizer",
+      "detection_threshold": 0.80,
+      "dialect_count": 10,
+      "description": "English language with 10 major regional variants"
+    }
+  },
+  "tokenizers": {
+    "bai_arabic_tokenizer": {
+      "type": "subword",
+      "vocab_size": 50257,
+      "encoding": "utf-8",
+      "normalization": "nfc",
+      "special_tokens": {
+        "pad": "[PAD]",
+        "unk": "[UNK]",
+        "cls": "[CLS]",
+        "sep": "[SEP]",
+        "mask": "[MASK]"
+      }
+    },
+    "bai_english_tokenizer": {
+      "type": "subword",
+      "vocab_size": 50257,
+      "encoding": "utf-8",
+      "normalization": "nfc",
+      "special_tokens": {
+        "pad": "[PAD]",
+        "unk": "[UNK]",
+        "cls": "[CLS]",
+        "sep": "[SEP]",
+        "mask": "[MASK]"
+      }
+    }
+  },
+  "categories": {
+    "INBOX_PINNED": {
+      "id": 0,
+      "name": "Inbox Pinned",
+      "description": "High-priority messages pinned to top of inbox",
+      "priority": 1
+    },
+    "INBOX": {
+      "id": 1,
+      "name": "Inbox",
+      "description": "Regular inbox messages",
+      "priority": 2
+    },
+    "BAIT": {
+      "id": 2,
+      "name": "BAIT",
+      "description": "BAI Information & Tracking messages",
+      "priority": 3
+    },
+    "BAIS": {
+      "id": 3,
+      "name": "BAIS",
+      "description": "BAI System messages",
+      "priority": 4
+    },
+    "BAIADS": {
+      "id": 4,
+      "name": "BAIADS",
+      "description": "BAI Advertisement & Discovery messages",
+      "priority": 5
+    }
+  },
+  "category_mapping": {
+    "0": "INBOX_PINNED",
+    "1": "INBOX",
+    "2": "BAIT",
+    "3": "BAIS",
+    "4": "BAIADS"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "system": {
+    "version": "1.0.0",
+    "description": "Global decision-making rules and execution thresholds"
+  },
+  "confidence": {
+    "autonomous_execution_threshold": 0.85,
+    "high_confidence_threshold": 0.75,
+    "low_confidence_threshold": 0.50,
+    "reject_threshold": 0.30,
+    "fallback_strategy": "prompt_user_on_low_confidence"
+  },
+  "otp_detection": {
+    "enabled": true,
+    "high_priority_bypass": true,
+    "confidence_multiplier": 1.5,
+    "auto_flag_threshold": 0.90,
+    "description": "One-Time Password and security code detection rules"
+  },
+  "behavior": {
+    "low_confidence_action": "trigger_user_prompt",
+    "confidence_below_threshold_fallback": {
+      "action": "request_manual_review",
+      "notify_user": true,
+      "store_for_review": true
+    },
+    "high_confidence_auto_action": {
+      "action": "auto_categorize",
+      "log_decision": true,
+      "notify_user": false
+    }
+  },
+  "timing": {
+    "max_inference_time_ms": 500,
+    "cache_ttl_seconds": 3600,
+    "batch_processing_interval_ms": 100
+  },
+  "logging": {
+    "log_level": "info",
+    "log_predictions": true,
+    "log_confidence_scores": true,
+    "audit_trail": true
+  },
+  "validation": {
+    "enable_cross_validation": true,
+    "minimum_sample_size": 10,
+    "validation_confidence_threshold": 0.80
+  },
+  "exceptions": {
+    "emergency_bypass": {
+      "enabled": true,
+      "requires_auth": true,
+      "description": "Administrative override for critical cases"
+    },
+    "dialect_mismatch": {
+      "fallback_language": "en",
+      "fallback_dialect": "en-US",
+      "confidence_penalty": 0.15
+    }
+  }
+}
