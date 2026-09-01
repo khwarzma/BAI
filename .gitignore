@@ -27,10 +27,9 @@ env/
 ENV/
 
 # Data Traces & Checkpoints (Temporary Colab / Local outputs)
-data/processed/
 data/raw/
 training/checkpoints/
-
+zg_files/
 # IDE & Editor files
 .vscode/
 .idea/

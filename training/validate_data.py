@@ -5,11 +5,10 @@ import argparse
 import hashlib
 import json
 import random
-import sqlite3
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple, Set
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_ROOT = ROOT / "data" / "raw"
@@ -53,7 +52,7 @@ def ensure_dirs() -> None:
     CHECKPOINT_ROOT.mkdir(parents=True, exist_ok=True)
 
 
-def validate_record(record: Dict[str, Any], hash_registry: sqlite3.Connection) -> Tuple[bool, str, Dict[str, Any]]:
+def validate_record(record: Dict[str, Any], seen_hashes: Set[str]) -> Tuple[bool, str, Dict[str, Any]]:
     if not isinstance(record, dict):
         return False, "record is not an object", {}
 
@@ -83,11 +82,10 @@ def validate_record(record: Dict[str, Any], hash_registry: sqlite3.Connection) -
             return False, "BAIT records must have confidence_multiplier = 1.5", {}
 
     record_hash = sha256_hex(json.dumps(record, sort_keys=True, ensure_ascii=False))
-    row = hash_registry.execute("SELECT 1 FROM seen_hashes WHERE hash = ?", (record_hash,)).fetchone()
-    if row is not None:
+    if record_hash in seen_hashes:
         return False, "duplicate hash", {}
-    hash_registry.execute("INSERT INTO seen_hashes (hash, created_at) VALUES (?, datetime('now'))", (record_hash,))
-    hash_registry.commit()
+    
+    seen_hashes.add(record_hash)
 
     record["language"] = language
     record["dialect"] = dialect
@@ -178,22 +176,13 @@ def main() -> int:
     raw_root = Path(args.raw_root)
     processed_root = Path(args.processed_root)
 
-    hash_db_path = CHECKPOINT_ROOT / "hash_registry_validation.db"
-    if hash_db_path.exists():
-        hash_db_path.unlink()
-
-    hash_registry = sqlite3.connect(str(hash_db_path))
-    hash_registry.execute(
-        "CREATE TABLE IF NOT EXISTS seen_hashes (hash TEXT PRIMARY KEY, created_at TEXT NOT NULL)"
-    )
-    hash_registry.commit()
-
+    seen_hashes: Set[str] = set()
     valid_records: List[Dict[str, Any]] = []
     invalid_count = 0
     duplicate_count = 0
 
     for record in iter_raw_records(raw_root):
-        ok, reason, cleaned = validate_record(record, hash_registry)
+        ok, reason, cleaned = validate_record(record, seen_hashes)
         if not ok:
             if reason == "duplicate hash":
                 duplicate_count += 1
@@ -216,7 +205,6 @@ def main() -> int:
     print(f"Invalid records: {invalid_count}")
     print(f"Duplicate records: {duplicate_count}")
     print(f"Saved splits: train={len(train)}, val={len(val)}, test={len(test)}")
-    hash_registry.close()
     return 0
 
 
