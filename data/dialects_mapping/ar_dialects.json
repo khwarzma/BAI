@@ -1,4 +1,3 @@
-
 {
   "language": "ar",
   "dialect_count": 19,
@@ -28,7 +27,11 @@
       "speaker_population": 68000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["unique_phonetics", "loan_words_from_french_english", "simplified_grammar"]
+      "characteristics": [
+        "unique_phonetics",
+        "loan_words_from_french_english",
+        "simplified_grammar"
+      ]
     },
     "ar-SA": {
       "id": "ar-SA",
@@ -41,7 +44,11 @@
       "speaker_population": 28000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["guttural_sounds", "bedouin_influences", "oil_industry_terminology"]
+      "characteristics": [
+        "guttural_sounds",
+        "bedouin_influences",
+        "oil_industry_terminology"
+      ]
     },
     "ar-LEV": {
       "id": "ar-LEV",
@@ -54,7 +61,11 @@
       "speaker_population": 27000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["mediterranean_influences", "historical_syntax", "soft_consonants"]
+      "characteristics": [
+        "mediterranean_influences",
+        "historical_syntax",
+        "soft_consonants"
+      ]
     },
     "ar-AE": {
       "id": "ar-AE",
@@ -67,7 +78,11 @@
       "speaker_population": 1500000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["bedouin_base", "maritime_terminology", "modern_tech_vocabulary"]
+      "characteristics": [
+        "bedouin_base",
+        "maritime_terminology",
+        "modern_tech_vocabulary"
+      ]
     },
     "ar-KW": {
       "id": "ar-KW",
@@ -80,7 +95,11 @@
       "speaker_population": 1300000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["gulf_dialect_base", "oil_industry_terms", "trading_vocabulary"]
+      "characteristics": [
+        "gulf_dialect_base",
+        "oil_industry_terms",
+        "trading_vocabulary"
+      ]
     },
     "ar-QA": {
       "id": "ar-QA",
@@ -93,7 +112,11 @@
       "speaker_population": 400000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["gulf_dialect_base", "maritime_influences", "modern_urban_features"]
+      "characteristics": [
+        "gulf_dialect_base",
+        "maritime_influences",
+        "modern_urban_features"
+      ]
     },
     "ar-BH": {
       "id": "ar-BH",
@@ -106,7 +129,11 @@
       "speaker_population": 600000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["gulf_dialect_base", "pearl_diving_heritage", "multicultural_influences"]
+      "characteristics": [
+        "gulf_dialect_base",
+        "pearl_diving_heritage",
+        "multicultural_influences"
+      ]
     },
     "ar-OM": {
       "id": "ar-OM",
@@ -119,7 +146,11 @@
       "speaker_population": 2000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["southern_arabian_base", "maritime_traditions", "conservative_phonetics"]
+      "characteristics": [
+        "southern_arabian_base",
+        "maritime_traditions",
+        "conservative_phonetics"
+      ]
     },
     "ar-YE": {
       "id": "ar-YE",
@@ -132,7 +163,11 @@
       "speaker_population": 25000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["southern_arabian_features", "ancient_roots", "unique_phonology"]
+      "characteristics": [
+        "southern_arabian_features",
+        "ancient_roots",
+        "unique_phonology"
+      ]
     },
     "ar-MA": {
       "id": "ar-MA",
@@ -145,7 +180,11 @@
       "speaker_population": 17000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["berber_influences", "french_spanish_loanwords", "distinct_phonology"]
+      "characteristics": [
+        "berber_influences",
+        "french_spanish_loanwords",
+        "distinct_phonology"
+      ]
     },
     "ar-TN": {
       "id": "ar-TN",
@@ -158,7 +197,11 @@
       "speaker_population": 10000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["berber_base", "mediterranean_influences", "italian_loanwords"]
+      "characteristics": [
+        "berber_base",
+        "mediterranean_influences",
+        "italian_loanwords"
+      ]
     },
     "ar-DZ": {
       "id": "ar-DZ",
@@ -171,7 +214,11 @@
       "speaker_population": 42000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["berber_base", "french_loanwords", "regional_micro_dialects"]
+      "characteristics": [
+        "berber_base",
+        "french_loanwords",
+        "regional_micro_dialects"
+      ]
     },
     "ar-LY": {
       "id": "ar-LY",
@@ -184,7 +231,11 @@
       "speaker_population": 6000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["berber_influences", "italian_heritage", "nomadic_traditions"]
+      "characteristics": [
+        "berber_influences",
+        "italian_heritage",
+        "nomadic_traditions"
+      ]
     },
     "ar-IQ": {
       "id": "ar-IQ",
@@ -197,7 +248,11 @@
       "speaker_population": 38000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["mesopotamian_heritage", "persian_influences", "urban_rural_divide"]
+      "characteristics": [
+        "mesopotamian_heritage",
+        "persian_influences",
+        "urban_rural_divide"
+      ]
     },
     "ar-JO": {
       "id": "ar-JO",
@@ -210,7 +265,11 @@
       "speaker_population": 9000000,
       "classification": "colloquial",
       "parent_dialect": "ar-LEV",
-      "characteristics": ["levantine_base", "bedouin_elements", "palestinian_influences"]
+      "characteristics": [
+        "levantine_base",
+        "bedouin_elements",
+        "palestinian_influences"
+      ]
     },
     "ar-PL": {
       "id": "ar-PL",
@@ -223,7 +282,11 @@
       "speaker_population": 5000000,
       "classification": "colloquial",
       "parent_dialect": "ar-LEV",
-      "characteristics": ["levantine_base", "historical_urban_features", "refugee_diaspora_variations"]
+      "characteristics": [
+        "levantine_base",
+        "historical_urban_features",
+        "refugee_diaspora_variations"
+      ]
     },
     "ar-SU": {
       "id": "ar-SU",
@@ -236,7 +299,11 @@
       "speaker_population": 35000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["african_influences", "nilo_saharan_substrates", "unique_verb_forms"]
+      "characteristics": [
+        "african_influences",
+        "nilo_saharan_substrates",
+        "unique_verb_forms"
+      ]
     },
     "ar-SO": {
       "id": "ar-SO",
@@ -249,7 +316,12 @@
       "speaker_population": 16000000,
       "classification": "colloquial",
       "parent_dialect": "ar-MSA",
-      "characteristics": ["horn_of_africa_base", "somali_influences", "unique_phonology", "religious_register"]
+      "characteristics": [
+        "horn_of_africa_base",
+        "somali_influences",
+        "unique_phonology",
+        "religious_register"
+      ]
     }
   },
   "normalization": {
@@ -258,17 +330,55 @@
     "case_handling": "case_insensitive",
     "short_vowels": "preserve_or_restore",
     "common_substitutions": {
-      "hamza_variants": ["ء", "أ", "إ", "ؤ", "ئ"],
-      "alef_variants": ["ا", "آ", "ى"],
-      "teh_variants": ["ة", "ه"],
-      "ya_variants": ["ي", "ى"]
+      "hamza_variants": [
+        "ء",
+        "أ",
+        "إ",
+        "ؤ",
+        "ئ"
+      ],
+      "alef_variants": [
+        "ا",
+        "آ",
+        "ى"
+      ],
+      "teh_variants": [
+        "ة",
+        "ه"
+      ],
+      "ya_variants": [
+        "ي",
+        "ى"
+      ]
     }
   },
   "subword_indicators": {
     "ar_token_prefix": "▁",
-    "common_msa_markers": ["ما", "في", "من", "هل", "قد"],
-    "common_colloquial_markers": ["شنو", "إيش", "يا", "والله"],
-    "otp_indicators": ["رمز", "كود", "توثيق", "التحقق", "الرقم"],
-    "slang_markers": ["يلا", "عمتا", "خلاص", "تمام"]
+    "common_msa_markers": [
+      "ما",
+      "في",
+      "من",
+      "هل",
+      "قد"
+    ],
+    "common_colloquial_markers": [
+      "شنو",
+      "إيش",
+      "يا",
+      "والله"
+    ],
+    "otp_indicators": [
+      "رمز",
+      "كود",
+      "توثيق",
+      "التحقق",
+      "الرقم"
+    ],
+    "slang_markers": [
+      "يلا",
+      "عمتا",
+      "خلاص",
+      "تمام"
+    ]
   }
 }
