@@ -245,7 +245,7 @@ BAI is directly connected to Bareeed's production backend. Contributions must th
 4. Expect strict review of security, memory ownership, concurrency, ABI compatibility, latency, and failure behavior.
 5. Do not change the ONNX input/output contract without explicit compatibility review.
 
-The public repository exposes the C++ engine core, ONNX Runtime bridge, and Python bindings for inspection and contribution. Proprietary model weights and production integration details remain controlled by Khwarazma. For contribution, licensing, or partnership enquiries, contact **Khwarzma@bareeed.com** or **im4@bareeed.com**.
+The public repository exposes the C++ engine core, ONNX Runtime bridge, and Python bindings for inspection and contribution. Proprietary model weights and production integration details remain controlled by Khwarazma. For contribution, licensing, or partnership enquiries, contact **khwarzma@bareeed.com** or **im4@bareeed.com**.
 
 ## License
 
