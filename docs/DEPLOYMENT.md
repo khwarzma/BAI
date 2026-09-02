@@ -1,253 +1,99 @@
-# BAI (Bareeed Artificial Intelligence) — Production Deployment & Operations Architecture
+# Khwarazma BAI Deployment
 
-> **Specification Standard:** AM Standard (SAM Category)
-> **Document Identifier:** AM-DEPL-BAI-1.0.0
-> **Initiator & Owner:** Khwarzma
-> **Target Application Infrastructure:** Bareeed Production Servers
-> **Status:** Active Operational & Deployment Specification
+## Deployment boundary
 
----
+Khwarazma BAI is intended to run inside the Bareeed backend boundary so that mail classification can remain close to the product's privacy and authorization controls. The engine returns classification signals; the Bareeed application owns mailbox writes, user prompts, retention, purge scheduling, access control, observability, and production rollout policy.
 
-## 1. System Hardware Boundaries & Environment Isolation
+The public source surface includes the C++23 engine core, ONNX Runtime bridge, C API, and pybind11 module. Production model weights remain closed and proprietary. A local model artifact in a development checkout does not imply permission to redistribute or deploy it in another service.
 
-The deployment architecture of BAI v1 is engineered under strict execution boundaries to ensure complete co-existence with web application processes (Django / Gunicorn / Nginx) on standard 2-core CPU hardware configurations.
+## Requirements
 
-```text
-+---------------------------------------------------------------------------------+
-|                               SYSTEM SECURITY BOUNDARY                          |
-|                                                                                 |
-|  +---------------------------------------------------------------------------+  |
-|  |                         Django Web Process Layer                          |  |
-|  +---------------------------------------------------------------------------+  |
-|                                      |                                          |
-|                          Direct Ctypes / Pybind11 API                           |
-|                                      v                                          |
-|  +---------------------------------------------------------------------------+  |
-|  |                 BAI Engine Native C++ Shared Library (.so)                |  |
-|  |                                                                           |  |
-|  |  +--------------------+   +-------------------+   +--------------------+  |  |
-|  |  | Zero-Copy Tokenizer|   | ONNX Micro-Kernel |   | JSON Output Stream |  |  |
-|  |  | (In-Memory Buffer) |   | (GGUF / INT8)     |   | (Static Buffer)    |  |  |
-|  |  +--------------------+   +-------------------+   +--------------------+  |  |
-|  +---------------------------------------------------------------------------+  |
-+---------------------------------------------------------------------------------+
+- CMake 3.20 or newer.
+- A compiler with C++23 support.
+- Python 3 development headers and interpreter.
+- `pybind11` discoverable from the active Python environment.
+- ONNX Runtime headers and a compatible shared library.
+- An authorized compatible BAI model artifact and `models/vocab.json`.
 
-```
+Python training/export/test dependencies are listed in `requirements.txt`. Installing that file does not install a C++ compiler, CMake, ONNX Runtime development files, or a packaged `bai_core` wheel.
 
-### 1.1 Infrastructure & Hardware Capping Parameters
+## Build the native extension
 
-| Parameter / Resource | Enforcement Constraint | Verification Mechanism |
-| --- | --- | --- |
-| **Operating System** | Linux (Debian 12 / Ubuntu 22.04 LTS x86_64) | POSIX Kernel Interface |
-| **CPU Architecture** | 2 CPU Cores Maximum (AVX2 Enabled) | System Cgroups Thread Binding |
-| **System RAM Limit** | Hard cap $\le 150 \text{ MB}$ total resident set size (RSS) | Static Memory Allocator & Valgrind |
-| **Disk Storage I/O** | $0 \text{ bytes}$ dynamic disk writes during inference | In-Memory Payload Processing |
-| **Dependency Footprint** | Zero PyTorch, Zero Heavy ML Runtimes | Native Dynamic Shared Library (`.so`) |
-
----
-
-## 2. Server Directory Layout & Artifact Isolation
-
-The deployment directory contains only pre-compiled shared binaries, quantized model parameters, and runtime configuration mappings.
-
-```text
-/our/server/root/
-├── config/
-│   ├── languages.json            <-- Dynamic dialect maps & normalization rules
-│   └── rules.json                <-- System lifecycle & auto-purge rules
-├── core/
-│   └── bai_engine.so             <-- Native C++23 compiled shared library object
-├── bridge/
-│   └── bai_pybind.so             <-- Native Python binding module extension
-└── models/
-    ├── v1.bai                    <-- Active quantized micro-weights file (GGUF / ONNX)
-    └── v1.1.bai                  <-- Staged model weights file for atomic hot-swap
-
-```
-
----
-
-## 3. C++ Shared Library Compilation & Optimization Pipeline
-
-Building the native execution engine requires compilation with maximum optimization flags using C++23 standards.
-
-### 3.1 Advanced CMake Build Script (`core/CMakeLists.txt`)
-
-```cmake
-cmake_minimum_required(VERSION 3.22)
-project(bai_engine LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# High-performance compiler optimization flags
-add_compile_options(
-    -O3
-    -march=native
-    -flto
-    -fno-rtti
-    -fno-exceptions
-    -Wall
-    -Wextra
-)
-
-# Core Dynamic Shared Object
-add_library(bai_engine SHARED
-    src/tokenizer.cpp
-    src/inference_engine.cpp
-    src/json_builder.cpp
-)
-
-target_include_directories(bai_engine PUBLIC include/)
-
-```
-
-### 3.2 Compilation & Strip Sequence
+The checked-in build is defined by `core/CMakeLists.txt`:
 
 ```bash
-# Navigate to C++ core directory
-cd BAI/core
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 
-# Configure out-of-source build with Release optimizations
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
-
-# Compile shared library objects
-cmake --build build --config Release -j$(nproc)
-
-# Strip debug symbols to reduce dynamic binary footprint
-strip --strip-unneeded build/libbai_engine.so
-strip --strip-unneeded build/bai_pybind.so
-
-# Deploy compiled artifacts to server location
-cp build/libbai_engine.so /our/server/root/core/bai_engine.so
-cp build/bai_pybind.so /our/server/root/bridge/bai_pybind.so
-
+cmake -S core -B core/build \
+  -DPython3_EXECUTABLE="$(command -v python)" \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build core/build --config Release
 ```
 
----
+The project sets C++23 and position-independent code, builds the `bai_static` library, and conditionally generates the `bai_core` Python extension with `pybind11_add_module()` when pybind11 is found through CMake. The extension is defined by `core/bindings/bai_pybind.cpp`; it links the same native sources and ONNX Runtime library as the core target. The module exposes `EngineConfig`, `BaiEngine`, `InferencePipeline`, result types, and `get_version()`.
 
-## 4. Integration with Django Host Application
+`core/CMakeLists.txt` compiles `src/engine.cpp`, `src/c_api.cpp`, `src/tokenizer.cpp`, `src/json_builder.cpp`, and `src/inference_engine.cpp`. It requires Python Interpreter/Development components, queries the active interpreter for `pybind11.get_cmake_dir()`, and links a compatible ONNX Runtime shared library. The Python target is optional at configure time; the static core target can still be produced if pybind11 is unavailable.
 
-Django communicates with the pre-compiled C++ shared object via Pybind11 bindings initialized at application startup.
+The current CMake file contains an absolute developer-machine path to `libonnxruntime.so`. A portable deployment must replace this with a toolchain/package-manager path or an explicit deployment configuration. The generated extension filename is platform- and Python-version-specific.
 
-### 4.1 Django Application Bootstrapper (`apps.py`)
+The model artifact is an ONNX-compatible file produced by `training/export.py`: PyTorch is exported with opset 17, then dynamic INT8 quantization writes the configured output path (normally `models/v1.bai`) while preserving the input/output node names. The `.bai` suffix is a repository naming convention; the C++ loader passes the path directly to `Ort::Session` and does not implement a separate custom model format.
+
+## Runtime initialization
 
 ```python
-import sys
-from django.apps import AppConfig
+import bai_core
 
-# Inject server bridge location into runtime path
-sys.path.append("/our/server/root/bridge")
-import bai_pybind  # Native C++ module link
+config = bai_core.EngineConfig()
+config.model_path = "/authorized/models/v1.bai"
+config.num_threads = 2
+config.max_seq_length = 512
 
-class BaiEngineConfig(AppConfig):
-    name = 'bai_engine_integration'
-    engine_instance = None
-
-    def ready(self):
-        """
-        Instantiates single global engine context on Django startup.
-        Loads model weights once into shared RAM space.
-        """
-        BaiEngineConfig.engine_instance = bai_pybind.InferenceEngine(
-            model_path="/our/server/root/models/v1.bai",
-            config_path="/our/server/root/config/languages.json",
-            rules_path="/our/server/root/config/rules.json"
-        )
-
+pipeline = bai_core.InferencePipeline()
+pipeline.initialize(config, "/authorized/models/vocab.json")
+result = pipeline.predict_json("Your verification code is 654321.")
 ```
 
-### 4.2 In-Memory Inference Execution Service (`services.py`)
+Initialization creates an ONNX Runtime environment and session, configures graph optimization and threads, selects the configured provider, loads the model, and allocates input buffers. Model loading is excluded from the repository's request-latency benchmark.
 
-```python
-import json
-from django.apps import apps
-from typing import Dict, Any
+For C++ consumers, include `core/include/inference_engine.hpp` and link the native implementation and ONNX Runtime. For C-compatible consumers, use `core/include/bai/c_api.h`; retain the returned opaque handle until `bai_engine_destroy()`.
 
-def process_incoming_mail_payload(subject: str, body: str, sender: str) -> Dict[str, Any]:
-    """
-    Passes raw mail payload buffers to C++ engine.
-    Executes sub-15ms classification with zero disk writes.
-    """
-    config = apps.get_app_config('bai_engine_integration')
-    engine = config.engine_instance
+## Runtime operations and safety
 
-    # Native C++ execution pass
-    raw_json_response = engine.predict(
-        subject=subject,
-        body=body,
-        sender=sender
-    )
+The engine is designed for one initialized instance to serve text requests, but its mutable input buffers are not protected by an explicit synchronization primitive. Serialize calls on a shared instance or provision independent instances per concurrent execution context. Validate deployment behavior under the host web server's worker/thread model.
 
-    return json.loads(raw_json_response)
+`use_gpu` and `enable_fp16` require special care: CUDA provider code is conditional on `ENABLE_CUDA`, and `enable_fp16` is not currently consumed by `engine.cpp`. GPU deployment is not established by the available build or tests.
 
-```
+The implementation does not provide the previously described memory-mapped model loading or atomic pointer swap. Model updates should therefore be treated as an application-level process/session replacement procedure and validated with a controlled rollout; do not claim zero-downtime hot swapping from this repository alone.
 
----
+## Performance acceptance
 
-## 5. Zero-Downtime Model Hot-Swapping Procedure
-
-Updating model weights (e.g., from `v1.bai` to `v1.1.bai`) is executed atomically using memory-mapped buffer pointer swapping without restarting Gunicorn or dropping active mail tasks.
-
-```text
-                                HOT-SWAPPING PIPELINE
-
-  New Weight File        Integrity Verification         Atomic Memory Swap
- +---------------+       +--------------------+       +--------------------+
- |   v1.1.bai    |  -->  |  SHA-256 Checksum  |  -->  | Signal C++ Engine  |
- | File Staged   |       |  Verification      |       | (Pointer Reload)   |
- +---------------+       +--------------------+       +--------------------+
-                                                                |
-                                                                v
-                                                      Zero Dropped Requests /
-                                                      Zero Service Restarts
-
-```
-
-### 5.1 Hot-Swap Execution Script (`deploy_weights.sh`)
+The available test command is:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-MODEL_DIR="/our/server/root/models"
-NEW_MODEL="v1.1.bai"
-TARGET_LINK="v1.bai"
-CHECKSUM_FILE="v1.1.bai.sha256"
-
-cd "${MODEL_DIR}"
-
-# Step 1: Verify model file checksum integrity
-sha256sum -c "${CHECKSUM_FILE}"
-
-# Step 2: Atomic symlink replacement
-ln -sf "${NEW_MODEL}" active_weights.tmp
-mv -Tf active_weights.tmp "${TARGET_LINK}"
-
-# Step 3: Send POSIX signal to Gunicorn processes to reload pointer memory
-pkill -USR1 -f "gunicorn.*bareeed"
-
+PYTHONPATH=core/build python -m pytest tests -q -s
 ```
 
----
+The performance test checks 1,000 sequential warmed requests, mean latency `<= 15 ms`, RSS `<= 150 MB`, and RSS growth `<= 5 MB`. A recorded environment measured 0.6939 ms mean latency and 14.54 MB RSS. These results are evidence for that environment only; production acceptance should repeat the benchmark on the target host, with target worker count, input-length distribution, cold-start behavior, and concurrency profile.
 
-## 6. Real-Time Resource Auditing & SLA Verification
+## BUSL-1.1 and closed weights
 
-To guarantee adherence to the **AM Standard** during production operation, system health checks continuously monitor execution boundaries:
+This repository is licensed under the **Business Source License 1.1** in `LICENSE`. The current terms permit non-production development, educational use, security auditing, interoperability, and evaluation. Without written authorization from Khwarazma, the Licensed Work may not be deployed in a live production environment, embedded in a commercial service, used to build a competing product, or sold/hosted as a service.
 
-* **Memory Footprint Audit:** Verifies that system RAM usage remains capped below $150 \text{ MB}$.
-```bash
-ps aux | grep bareeed | awk '{sum+=$6} END {print "Total Memory: " sum/1024 " MB"}'
+The Change Date is **2030-09-03**, after which the license converts to Apache License 2.0 as specified in `LICENSE`, subject to the license terms. The license does not grant rights to proprietary BAI weights, checkpoints, private Bareeed data, or production credentials. Model files must be obtained and deployed only under explicit Khwarazma authorization.
 
-```
+## Production review requirements
 
+Because BAI is directly integrated with Bareeed's production backend, every deployment change should receive strict pull-request review for:
 
-* **Latency Verification:** Confirms inference execution latency satisfies the sub-15ms constraint via the telemetry metadata emitted by the C++ core:
-```json
-"telemetry": {
-  "inference_time_ms": 7.34,
-  "memory_footprint_mb": 112.4
-}
+- privacy and data handling;
+- model input/output compatibility;
+- ABI and Python compatibility;
+- memory ownership and concurrency;
+- error propagation and failure recovery;
+- latency/RSS regression;
+- model provenance and closed-weight access;
+- rollback and operational observability.
 
-```
+For licensing, deployment authorization, or contribution questions, contact `Khwarzma@bareeed.com` or `im4@bareeed.com`.

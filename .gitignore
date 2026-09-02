@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
 
 # C++ Build outputs & Binary files
 build/
@@ -35,6 +36,13 @@ zg_files/
 .idea/
 *.swp
 *.swo
+*.zip
+*.zg
 
 # Temporary Copilot Output Buffer (keep prompt.md / fix.md, ignore dynamic outputs)
 .copilot/*/output.txt
+temp_*/
+.tmp_docs/
+models/*
+*.db
+data/processed/*.jsonl

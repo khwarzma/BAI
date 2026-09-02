@@ -1,125 +1,114 @@
-# BAI (Bareeed Artificial Intelligence) — Technical Specification
+# Khwarazma BAI Technical Specification
 
-> **Specification Standard:** AM Standard (SAM Category)
->
->
-> **Document Identifier:** AM-SPEC-BAI-1.0.0
-> **Initiator:** Khwarzma
-> **Target Application:** Bareeed Email Infrastructure
-> **Status:** Active Technical Specification
+This specification records the implementation-backed v1 contract for Khwarazma BAI, the Bareeed Artificial Intelligence engine used for compact email triage.
 
----
+## 1. Operational goals and evidence
 
-## 1. System Constraints & Boundary Conditions
+The performance targets are:
 
-BAI v1 is classified as a Small Arabic Model (SAM) specialized for single-task transactional email processing. All operational implementations must adhere strictly to the numerical thresholds defined below:
+| Metric | Target | Repository evidence |
+| --- | ---: | --- |
+| Mean request latency | `< 15 ms` | `tests/test_performance.py` asserts `<= 15.0 ms`; a recorded local run measured **0.69 ms mean** (0.6939 ms) over 1,000 sequential requests. |
+| Process RSS | `< 150 MB` | The test asserts `<= 150 MB`; a recorded local run measured 14.54 MB RSS after the request loop. |
+| RSS growth during loop | `<= 5 MB` | Asserted by the performance test. |
 
-| Metric / Parameter | Boundary Limit | Enforcement Mechanism |
+The benchmark warms the pipeline with ten calls, then measures 1,000 sequential `predict_json()` calls plus Python `json.loads`. It excludes initialization and model loading, and does not establish cold-start, concurrent, GPU, p95/p99, or cross-machine performance. RSS is a process high-water mark obtained through `resource.getrusage`; it is not a model-only memory measurement.
+
+`tests/test_performance.py` records each request with `time.perf_counter()`, computes the arithmetic mean with `statistics.fmean()`, and asserts average latency, final high-water RSS, and RSS growth. In the recorded environment the mean was approximately **0.69 ms** (0.6939 ms) and post-loop RSS was **14.54 MB**. These results demonstrate the thresholds for that environment and test shape; they are not a universal service-level guarantee.
+
+The engine's performance design includes a compact transformer, ONNX Runtime execution, fixed-size input buffers, graph optimization configuration, and optional thread configuration. The native path still performs tokenization, buffer copies, temporary ONNX value construction, inference, postprocessing, JSON serialization, and (in the test) JSON parsing.
+
+## 2. Input contract
+
+The public text path accepts a non-empty UTF-8-oriented `std::string`. `InferencePipeline::predict()` rejects empty text. The tokenizer produces:
+
+- `input_ids`: `int64` token IDs;
+- `attention_mask`: `int64` values where 1 represents a real token and 0 represents padding;
+- `[CLS]` at the beginning and `[SEP]` at the end;
+- padding to the requested maximum length, normally 512.
+
+The lower-level engine requires equal, non-empty spans whose length does not exceed `EngineConfig::max_seq_length`. It does not validate the semantic correctness of individual token IDs or mask values.
+
+## 3. ONNX model contract
+
+The model and runtime must agree on these names and shapes:
+
+| Direction | Name | Meaning |
 | --- | --- | --- |
-| **Model Weight Count** | $\le 25 \times 10^6$ parameters | Encoder layer parameter capping
+| Input | `input_ids` | Batch token IDs, `int64`. |
+| Input | `attention_mask` | Batch token/padding mask, `int64`. |
+| Output | `logits_category` | Five category logits: inbox pinned, inbox, bait, bais, baiads. |
+| Output | `logits_otp` | One binary OTP classification logit. |
+| Output | `confidence` | One confidence score produced by the model. |
 
- |
-| **Inference Latency** | $\le 15 \text{ ms}$ per email payload | Native C++23 execution engine
+`BaiEngine::initialize()` caches these names and `BaiEngine::infer()` requires exactly three output tensors. Category output is copied into `std::array<float, 5>`, while OTP and confidence use their first scalar values.
 
- |
-| **Active VRAM / RAM Footprint** | $\le 150 \text{ MB}$ total memory | Static memory allocation & Quantization
+The contract is positional as well as nominal: category logits are expected to contain five values, and the OTP/confidence outputs are expected to contain one scalar for the single-item inference path. A model with different node names, output order, or dimensions is not compatible without coordinated changes to `training/export.py` and `core/src/engine.cpp`.
 
- |
-| **CPU Execution Limits** | 2 Cores max, thread-bound | Cgroup thread limiting & CPU affinity
+The Python model (`training/model.py`) uses a six-layer `nn.TransformerEncoder` with `d_model=256`, eight attention heads, feed-forward width 1024, maximum sequence length 512, and five category outputs by default. `training/export.py` exports with ONNX opset 17 and validates the exported output contract before quantization.
 
- |
-| **Disk I/O Footprint** | $0 \text{ bytes}$ written during inference | Pure in-memory payload processing
+## 4. Postprocessing and confidence
 
- |
-| **Quantization Format** | GGUF / ONNX (INT8 / INT4) | Symmetric uniform quantization
+Category probabilities are computed using stable softmax:
 
- |
+```text
+max = max(category_logits)
+e_i = exp(category_logits_i - max)
+p_i = e_i / sum(e_i)
+```
 
----
+The category is the index with the highest `p_i`. The runtime maps indexes to:
 
-## 2. Input Payload & Normalization Pipeline
+```text
+0 -> inbox_pinned
+1 -> inbox
+2 -> bait
+3 -> bais
+4 -> baiads
+```
 
-The inference core accepts incoming email payloads containing raw headers, subject line, and plaintext content body. Pre-processing is executed via the `languages.json` configuration without mutating core C++ structures.
+OTP confidence uses the sigmoid function:
 
-### 2.1 Text Normalization Rules
+```text
+sigmoid(x) = 1 / (1 + exp(-x))
+```
 
-Before tokenization, text stream buffers undergo zero-allocation byte-level normalization:
+`otp_detected` is true when the raw OTP logit is greater than zero. The model's overall `confidence` is already sigmoid-bounded in `BaiMicroEncoder.confidence_head`, and the native runtime returns it without applying a second transform.
 
-* **Arabic Normalization:** Strip decorative Tatweel (`U+0640`), unify Alef variants (`أ`, `إ`, `آ` $\rightarrow$ `ا`), unify Yaa/Alif Maqsoora (`ى` $\rightarrow$ `ي`), and remove non-essential diacritics (Tashkeel).
+The learned confidence objective is implemented in `BaiTrainer._compute_loss()`:
 
+```text
+0.7 * CrossEntropy(category)
++ 0.3 * BCEWithLogits(OTP)
++ 0.2 * MSE(confidence, category_correctness)
+```
 
-* **English Normalization:** Case folding to lowercase, ASCII control character stripping, and whitespace collapse.
-* **OTP Number Preservation:** Numeric sequences within token windows surrounding keyword boundaries (`code`, `OTP`, `رمز`, `تأكيد`) are preserved without token decomposition.
+The policy thresholds in `config/rules.json` (including 0.85 autonomous execution, 0.75 high confidence, 0.50 low confidence, 0.30 reject, and 0.90 auto-flag) are metadata for the application policy. The native runtime does not load or enforce them. There is no separate temperature-scaling, isotonic, or Platt calibration stage in the inspected source.
 
+`training/export.py` validates the quantized artifact with `onnxruntime.InferenceSession`, random `int64` inputs of shape `(1, 128)`, three outputs, shapes `(1, 5)`, `(1, 1)`, and `(1, 1)`, and confidence values in `[0, 1]`. The exporter uses a `(1, 256)` dummy input for export and declares dynamic batch and sequence axes for both inputs.
 
+## 5. JSON result contract
 
----
-
-## 3. Classification Engine & JSON Schema Output
-
-The inference engine evaluates the normalized sequence and emits a deterministic, strict JSON string payload to the Django host process.
-
-### 3.1 Category Taxonomy Definitions
-
-1. **`INBOX_PINNED`:** Critical transactional messages, direct account alerts, or explicit priority items requiring immediate user visibility.
-2. **`INBOX`:** Standard user-to-user correspondence and routine communications requiring no automated intervention.
-3. **`BAIT` (Bareeed Artificial Intelligence Trash):** Expired OTP notices, transient system logs, and obsolete transactional receipts.
-4. **`BAIS` (Bareeed Artificial Intelligence Spam):** Unsolicited commercial bulk email, phishing attempts, and unauthorized distribution list mailings.
-5. **`BAIADS` (Bareeed Artificial Intelligence Ads):** Recognized commercial promotions, newsletters, and marketing campaigns from verified senders.
-
-### 3.2 Canonical JSON Output Schema
+`predict_json()` serializes:
 
 ```json
 {
-  "category": "BAIT",
-  "confidence": 0.9842,
-  "is_otp": true,
-  "otp_metadata": {
-    "detected": true,
-    "validity_window_minutes": 5,
-    "expiration_action": "PURGE_IMMEDIATE"
-  },
-  "lifecycle_policy": {
-    "auto_purge": true,
-    "purge_horizon_days": 0,
-    "prompt_user_confirmation": false
-  },
-  "telemetry": {
-    "inference_time_ms": 8.42,
-    "language_detected": "ar",
-    "dialect_code": "ar-EG"
-  }
+  "category": "inbox_pinned",
+  "category_confidence": 0.0000,
+  "otp_detected": false,
+  "otp_confidence": 0.5000,
+  "overall_confidence": 0.0000,
+  "execution_time_ms": 0.0000,
+  "model_version": "1.0.0"
 }
-
 ```
 
----
+The values are formatted by `JsonBuilder` in `core/src/json_builder.cpp`. Application-level fields such as purge schedules, language labels, dialect labels, sender metadata, and user prompts are not emitted by the current native JSON builder.
 
-## 4. Lifecycle Management & Lifecycle Rules
+Important implementation limitation: `InferencePipeline::predict_json()` currently passes an all-zero category-logit array to `JsonBuilder` after obtaining the real prediction. Equal logits select `inbox_pinned`, so JSON category output can disagree with `predict()`'s actual model-selected category. Consumers should treat this as a known correctness risk until fixed.
 
-BAI v1 specifies exact lifecycle horizons for automated deletion and user prompting to ensure optimal inbox hygiene without intrusive notification behavior.
+## 6. Resource and portability constraints
 
-### 4.1 OTP Expiration & Purge Matrix
+`EngineConfig` exposes thread count, device ID, GPU selection, FP16 selection, maximum sequence length, and graph optimization level. `enable_fp16` is copied through the API but is not consumed by the current engine implementation. CUDA setup is conditional on `ENABLE_CUDA`; the checked-in CMake configuration does not define that macro.
 
-* **Immediate Purge (`BAIT`):** Upon detecting an OTP pattern, the validity window (e.g., 5 or 10 minutes) is extracted from the body context. When the validity time expires, the message is flagged for auto-purge from `BAIT` without triggering user notifications.
-* **Promotional Auto-Purge (`BAIADS`):** High-confidence commercial advertisements are assigned a default retention horizon (e.g., 30 days) before background deletion.
-* **Spam Isolation (`BAIS`):** Messages routed to `BAIS` are isolated immediately and scheduled for automated batch purging after a 7-day safety buffer.
-
-### 4.2 Non-Intrusive Prompting Logic
-
-* **High Confidence ($\ge 0.85$):** The classification action is executed automatically. `prompt_user_confirmation` is set to `false`.
-* **Low Confidence ($< 0.85$):** The message is routed to its most probable folder, but `prompt_user_confirmation` is set to `true`, instructing the UI to display a subtle, non-blocking categorization query.
-
----
-
-## 5. Security, Ethics, and Compliance (AM Standard)
-
-BAI v1 operates in full alignment with the ethical and privacy imperatives of the **AM Standard**:
-
-1. **Zero User Data Training:** Model training datasets are generated exclusively through synthetic pipelines and open evaluation sources. Under no circumstances are live user emails or private logs used for model training or refinement.
-
-
-2. **Jailbreak and Injection Resistance:** The classification engine ignores prompt injection patterns embedded within email bodies designed to manipulate category assignments or trigger system commands.
-
-
-3. **Islamic & Moral Standards:** Built-in classifier boundaries automatically isolate and flag malicious, pornographic, scam, or harmful email content into `BAIS` to protect the end-user experience.
+The repository contains no source-backed guarantee of a two-core cap, zero disk writes, universal sub-15 ms latency, or a literal zero-allocation path. Those are operational goals or design claims requiring deployment-specific verification.

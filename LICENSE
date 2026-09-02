@@ -1,84 +1,90 @@
-KHWARZMA SOURCE-AVAILABLE PUBLIC LICENSE
-Version 1.0 — August 2026
+Business Source License 1.1
 
-Copyright (c) 2026 Khwarzma (خوارزمة). All Rights Reserved.
+Copyright (c) 2026 Khwarazma. All rights reserved.
 
-Project: BAI (Bareeed Artificial Intelligence) — Core Engine v1.0
-Owner & Licensor: Khwarzma (خوارزمة)
-Target Platform: Bareeed Infrastructure
+The Licensed Work is:
 
-===============================================================================
-PREAMBLE AND PHILOSOPHY
-===============================================================================
+  Khwarazma BAI (Bareeed Artificial Intelligence), including the C++23
+  inference engine core, ONNX Runtime bridge, pybind11 bindings, C API,
+  tokenizer, JSON interface, build configuration, and associated source code
+  distributed with this repository.
 
-This License governs the access, inspection, and non-commercial usage of the
-BAI (Bareeed Artificial Intelligence) source code, binary artifacts, machine
-learning models, and architectural specifications provided by Khwarzma.
+Licensor:
 
-This is a SOURCE-AVAILABLE license, NOT an Open Source license. It is designed
-to allow community evaluation, educational study, code auditing, and security
-verification while strictly securing all commercial, operational, and
-competitive rights exclusively for Khwarzma and its authorized applications
-including the Bareeed platform.
+  Khwarazma
 
-===============================================================================
-2. PERMITTED USES (NON-COMMERCIAL GRANT)
-Subject to the terms of this License, Khwarzma hereby grants to any person or
-entity obtaining a copy of this software and associated documentation files
-(the "Software") a non-exclusive, non-transferable, royalty-free right to:
+Change Date:
 
-a) Inspect, view, read, and audit the source code for educational, academic,
-security research, and architectural evaluation purposes.
-b) Compile, build, and execute the Software strictly within isolated, non-production,
-local development or sandbox environments.
-c) Propose modifications or submit pull requests to the official Khwarzma
-repository for evaluation by the Licensor.
+  2030-09-03
 
-===============================================================================
-3. PROHIBITED USES (COMMERCIAL AND COMPETITIVE RESTRICTIONS)
-Under no circumstances may you execute any of the following restricted actions
-without a prior, explicit written commercial license from Khwarzma:
+Change License:
 
-a) PRODUCTION DEPLOYMENT: You MAY NOT run, deploy, embed, or integrate the
-Software (or derivative works based upon it) within any live production
-environment, commercial server, email delivery network, SaaS platform,
-or enterprise web infrastructure.
-b) COMPETITIVE USE: You MAY NOT use the Software, its underlying C++ engine,
-tokenizer data structures, quantized model weights (.bai), or fine-tuning
-architectures to build, offer, host, or power any product or service that
-competes directly or indirectly with the Bareeed email platform or any
-commercial offering by Khwarzma.
-c) COMMERCIAL DISTRIBUTION: You MAY NOT sell, sub-license, lease, rent,
-monetize, or charge fees for access to the Software or any modifications,
-wrappers, or distributions derived from it.
-d) RE-LICENSING AND RE-BRANDING: You MAY NOT remove, alter, or obfuscate any
-copyright notices, trademark references, or license terms, nor may you
-re-license the Software under any Open Source license (including but not
-limited to GPL, MIT, Apache, BSD, or BSL).
+  Apache License, Version 2.0
 
-===============================================================================
-4. INTELLECTUAL PROPERTY AND RESERVATION OF RIGHTS
-All right, title, interest, ownership, and intellectual property rights in and
-to the Software, including all patents, copyrights, trademarks, dataset structures,
-and machine learning model parameters, shall remain permanently and exclusively
-vested in Khwarzma.
+Additional Use Grant:
 
-No rights are granted by implication, estoppel, or otherwise, except for the
-express permissions defined in Section 2.
+  Subject to the terms of this License, you may use, copy, modify, compile,
+  test, and distribute the Licensed Work for non-production development,
+  educational, academic, security-audit, interoperability, and evaluation
+  purposes.
 
-===============================================================================
-5. DISCLAIMER OF WARRANTY AND LIMITATION OF LIABILITY
-THIS SOFTWARE IS PROVIDED BY KHWARZMA "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+  You may submit modifications to the official Khwarazma repository for
+  review. Submission does not grant permission to deploy the modification in
+  production or to use it in a competing commercial service.
 
-IN NO EVENT SHALL KHWARZMA OR ITS CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES,
-OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
-ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
+Notice:
 
-===============================================================================
-6. COMMERCIAL LICENSING ENQUIRIES
-For commercial deployment authorizations, enterprise licensing options, or
-custom partnership inquiries, please contact Khwarzma directly via official
-corporate channels.
+  This License does not grant any license or right to the proprietary BAI
+  model weights, checkpoints, datasets containing private Bareeed data, or
+  production credentials. Model weights remain closed and may be used only
+  under a separate written authorization from Khwarazma.
+
+  The Licensed Work is intended to support the Bareeed email organizer, a
+  Khwarazma product. Production integration with Bareeed or any other live
+  commercial system requires a separate written authorization from Khwarazma.
+
+  You must preserve this License and all copyright, trademark, attribution,
+  and proprietary notices included with the Licensed Work.
+
+Business Source License 1.1
+
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work, subject
+to the limitations in this License.
+
+The Licensor grants you a worldwide, royalty-free, non-exclusive license to
+use the Licensed Work during the period beginning on the date you receive the
+Licensed Work and ending on the Change Date, solely as permitted by the
+Additional Use Grant and subject to all other terms of this License.
+
+You may not, without prior written permission from Khwarazma:
+
+  1. deploy, run, embed, or integrate the Licensed Work in a live production
+     environment or commercial service;
+  2. use the Licensed Work to build, operate, or provide a product or service
+     that competes with Bareeed or another Khwarazma product;
+  3. sell, sublicense, lease, rent, host, or monetize access to the Licensed
+     Work or a derivative work; or
+  4. remove or obscure notices, misrepresent origin, or relicense the
+     Licensed Work under terms inconsistent with this License.
+
+On the Change Date, or if the Licensor publicly announces an earlier date,
+the rights granted under this License automatically convert to the Change
+License, subject to the terms of that license. If the Change License is not
+available, the Licensed Work remains governed by this License.
+
+The Licensed Work is provided "AS IS", without warranties or conditions of any
+kind, express or implied, including warranties of title, non-infringement,
+merchantability, or fitness for a particular purpose. You are solely
+responsible for evaluating the Licensed Work before use.
+
+To the maximum extent permitted by applicable law, Khwarazma and its
+contributors are not liable for any direct, indirect, incidental, special,
+consequential, exemplary, or other damages arising from or related to the
+Licensed Work or its use.
+
+For commercial deployment authorization, model-weight access, partnership, or
+licensing questions, contact:
+
+  Khwarzma@bareeed.com
+  im4@bareeed.com

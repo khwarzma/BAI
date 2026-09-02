@@ -1,0 +1,8 @@
+{
+  "total_samples": 205046,
+  "train_samples": 205046,
+  "val_samples": 0,
+  "test_samples": 0,
+  "dialects_count": 29,
+  "categories_count": 2
+}
