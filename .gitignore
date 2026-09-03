@@ -43,6 +43,9 @@ zg_files/
 .copilot/*/output.txt
 temp_*/
 .tmp_docs/
+BAI_V1_*.md
 models/*
 *.db
 data/processed/*.jsonl
+tmp_data_check/
+BAI_V1_*.md
