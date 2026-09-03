@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cwctype>
 #include <limits>
 #include <fstream>
 #include <sstream>
@@ -80,9 +79,7 @@ std::string BaiTokenizer::normalize_text(const std::string& text) const {
             }
         } else if (code_point == '-' || code_point == '_' || code_point == '.') {
             out.append(text, start, offset - start);
-        } else if ((code_point >= 0x80 && code_point != 0x200b) &&
-                   (std::iswalpha(static_cast<wint_t>(code_point)) ||
-                    std::iswdigit(static_cast<wint_t>(code_point)))) {
+        } else if (code_point >= 0x80 && code_point != 0x200b) {
             out.append(text, start, offset - start);
         }
     }
@@ -167,25 +164,37 @@ std::vector<int64_t> BaiTokenizer::tokenize_word(const std::string& word) const 
         return result;
     }
 
-    std::string remaining = word;
-    while (!remaining.empty()) {
+    std::vector<size_t> boundaries{0};
+    size_t offset = 0;
+    while (offset < word.size()) {
+        uint32_t code_point = 0;
+        if (!decode_utf8(word, offset, code_point)) {
+            continue;
+        }
+        boundaries.push_back(offset);
+    }
+
+    size_t remaining_index = 0;
+    while (remaining_index + 1 < boundaries.size()) {
         bool matched = false;
-        for (size_t len = remaining.size(); len > 0; --len) {
-            std::string candidate = remaining.substr(0, len);
-            if (len != remaining.size()) {
+        const size_t remaining_code_points = boundaries.size() - 1 - remaining_index;
+        for (size_t len = remaining_code_points; len > 0; --len) {
+            const size_t end = boundaries[remaining_index + len];
+            std::string candidate = word.substr(boundaries[remaining_index], end - boundaries[remaining_index]);
+            if (len != remaining_code_points) {
                 candidate = "##" + candidate;
             }
             auto it = vocab_.find(candidate);
             if (it != vocab_.end()) {
                 result.push_back(it->second);
-                remaining = remaining.substr(len);
+                remaining_index += len;
                 matched = true;
                 break;
             }
         }
         if (!matched) {
             result.push_back(unk_token_id_);
-            remaining = remaining.substr(1);
+            ++remaining_index;
         }
     }
     return result;
