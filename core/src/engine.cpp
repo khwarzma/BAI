@@ -44,6 +44,14 @@ std::expected<void, std::string> BaiEngine::initialize(
     const EngineConfig& config) {
     
     try {
+        if (config.max_seq_length != kModelSequenceLength) {
+            return std::unexpected(
+                "max_seq_length must be " + std::to_string(kModelSequenceLength)
+            );
+        }
+        if (config.num_threads <= 0) {
+            return std::unexpected("num_threads must be positive");
+        }
         config_ = config;
 
         // Initialize ONNX Runtime environment
@@ -53,7 +61,7 @@ std::expected<void, std::string> BaiEngine::initialize(
         auto session_options = std::make_unique<Ort::SessionOptions>();
         session_options->SetIntraOpNumThreads(config.num_threads);
         session_options->SetGraphOptimizationLevel(
-            static_cast<Ort::GraphOptimizationLevel>(config.graph_optimization_level)
+            static_cast<GraphOptimizationLevel>(config.graph_optimization_level)
         );
 
         // Enable GPU if requested
@@ -64,8 +72,7 @@ std::expected<void, std::string> BaiEngine::initialize(
             session_options->AppendExecutionProvider_CUDA(cuda_options);
             #endif
         } else {
-            // CPU execution provider (default)
-            session_options->AppendExecutionProvider_CPU();
+            // CPU is the default provider in the ONNX Runtime session.
         }
 
         // Create ONNX Runtime session
@@ -149,6 +156,7 @@ std::expected<InferenceResult, std::string> BaiEngine::infer(
         return std::unexpected(validation_error);
     }
 
+    std::lock_guard lock(inference_mutex_);
     try {
         // Zero-allocation path: copy into pre-allocated buffers
         const size_t seq_len = input_ids.size();
@@ -166,7 +174,7 @@ std::expected<InferenceResult, std::string> BaiEngine::infer(
         std::vector<int64_t> input_shape{1, static_cast<int64_t>(config_.max_seq_length)};
         
         auto input_ids_tensor = Ort::Value::CreateTensor<int64_t>(
-            *memory_info_,
+            static_cast<const OrtMemoryInfo*>(*memory_info_),
             input_ids_buffer_.data(),
             input_ids_buffer_.size(),
             input_shape.data(),
@@ -174,7 +182,7 @@ std::expected<InferenceResult, std::string> BaiEngine::infer(
         );
         
         auto attention_mask_tensor = Ort::Value::CreateTensor<int64_t>(
-            *memory_info_,
+            static_cast<const OrtMemoryInfo*>(*memory_info_),
             attention_mask_buffer_.data(),
             attention_mask_buffer_.size(),
             input_shape.data(),

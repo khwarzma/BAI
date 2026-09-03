@@ -1,21 +1,19 @@
 
 #pragma once
 
+#include "onnxruntime_cxx_api.h"
+
 #include <array>
 #include <span>
 #include <string>
 #include <memory>
+#include <mutex>
 #include <expected>
 #include <vector>
 
-namespace onnxruntime {
-    class Env;
-    class SessionOptions;
-    class Session;
-    class MemoryInfo;
-}
-
 namespace bai {
+
+inline constexpr size_t kModelSequenceLength = 256;
 
 /**
  * Configuration for BaiEngine initialization.
@@ -26,7 +24,7 @@ struct EngineConfig {
     int device_id = 0;                 // GPU device ID (0 for CPU)
     bool use_gpu = false;              // Enable GPU inference
     bool enable_fp16 = false;           // Enable FP16 computation (GPU only)
-    size_t max_seq_length = 512;       // Maximum sequence length
+    size_t max_seq_length = kModelSequenceLength; // ONNX model sequence length
     int graph_optimization_level = 2;  // ONNX graph optimization (0-3)
 };
 
@@ -81,7 +79,7 @@ public:
      * 
      * Zero-allocation inference path - all buffers pre-allocated during init.
      * 
-     * @param input_ids Tokenized input sequence (max 512 tokens)
+     * @param input_ids Tokenized input sequence (exactly 256 tokens)
      * @param attention_mask Attention mask (1=token, 0=padding)
      * @return std::expected containing InferenceResult on success, error message on failure
      */
@@ -98,9 +96,9 @@ public:
 
 private:
     // ONNX Runtime components
-    std::unique_ptr<onnxruntime::Env> env_;
-    std::unique_ptr<onnxruntime::Session> session_;
-    std::unique_ptr<onnxruntime::MemoryInfo> memory_info_;
+    std::unique_ptr<Ort::Env> env_;
+    std::unique_ptr<Ort::Session> session_;
+    std::unique_ptr<Ort::MemoryInfo> memory_info_;
 
     // Configuration
     EngineConfig config_;
@@ -112,6 +110,7 @@ private:
     // Cached node names
     std::vector<const char*> input_names_;
     std::vector<const char*> output_names_;
+    mutable std::mutex inference_mutex_;
 
     /**
      * Validate input dimensions and constraints.
