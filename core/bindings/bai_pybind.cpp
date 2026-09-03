@@ -37,7 +37,9 @@ PYBIND11_MODULE(bai_core, m) {
         .def_readwrite("otp_detected", &PredictionResult::otp_detected)
         .def_readwrite("otp_confidence", &PredictionResult::otp_confidence)
         .def_readwrite("overall_confidence", &PredictionResult::overall_confidence)
-        .def_readwrite("execution_time_ms", &PredictionResult::execution_time_ms);
+        .def_readwrite("execution_time_ms", &PredictionResult::execution_time_ms)
+        .def_readwrite("category_logits", &PredictionResult::category_logits)
+        .def_readwrite("otp_logit", &PredictionResult::otp_logit);
 
     py::class_<BaiEngine>(m, "BaiEngine")
         .def(py::init<>())

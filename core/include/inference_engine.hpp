@@ -19,6 +19,8 @@ struct PredictionResult {
     float otp_confidence;           // Confidence for OTP detection
     float overall_confidence;       // Overall model confidence
     double execution_time_ms;       // Inference time
+    std::array<float, 5> category_logits; // Raw model category logits
+    float otp_logit;                // Raw model OTP logit
 };
 
 /**

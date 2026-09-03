@@ -36,7 +36,7 @@ std::expected<PredictionResult, std::string> InferencePipeline::predict(const st
     {
         ScopedTimer timer(execution_time_ms);
 
-        const auto tokenized = tokenizer_.encode(text, 512);
+        const auto tokenized = tokenizer_.encode(text, kModelSequenceLength);
         if (!tokenized) {
             return std::unexpected("Tokenization failed: " + tokenized.error());
         }
@@ -84,7 +84,9 @@ std::expected<PredictionResult, std::string> InferencePipeline::predict(const st
             otp_detected,
             otp_confidence,
             raw_result.confidence,
-            execution_time_ms
+            execution_time_ms,
+            raw_result.category_logits,
+            raw_result.otp_logit
         };
     }
 }
@@ -95,10 +97,9 @@ std::expected<std::string, std::string> InferencePipeline::predict_json(const st
         return std::unexpected(std::string("Error: ") + predict_result.error());
     }
 
-    std::array<float, 5> dummy_logits{};
     return json_builder_.build_response(
-        dummy_logits,
-        predict_result->otp_detected ? 1.0f : -1.0f,
+        predict_result->category_logits,
+        predict_result->otp_logit,
         predict_result->overall_confidence,
         predict_result->execution_time_ms
     );
