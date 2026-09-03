@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cwctype>
+#include <limits>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -63,19 +65,82 @@ std::expected<BaiTokenizer::TokenizedOutput, std::string> BaiTokenizer::encode(
 std::string BaiTokenizer::normalize_text(const std::string& text) const {
     std::string out;
     out.reserve(text.size());
-    for (unsigned char ch : text) {
-        if (std::isalnum(ch)) {
-            out.push_back(static_cast<char>(std::tolower(ch)));
-        } else if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+    size_t offset = 0;
+    while (offset < text.size()) {
+        const size_t start = offset;
+        uint32_t code_point = 0;
+        if (!decode_utf8(text, offset, code_point)) {
+            continue;
+        }
+        if (code_point <= 0x7f && std::isalnum(static_cast<unsigned char>(code_point))) {
+            out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(code_point))));
+        } else if (code_point == ' ' || code_point == '\t' || code_point == '\n' || code_point == '\r') {
             if (!out.empty() && out.back() != ' ') {
                 out.push_back(' ');
             }
-        } else if (ch == '-' || ch == '_' || ch == '.') {
-            out.push_back(static_cast<char>(ch));
+        } else if (code_point == '-' || code_point == '_' || code_point == '.') {
+            out.append(text, start, offset - start);
+        } else if ((code_point >= 0x80 && code_point != 0x200b) &&
+                   (std::iswalpha(static_cast<wint_t>(code_point)) ||
+                    std::iswdigit(static_cast<wint_t>(code_point)))) {
+            out.append(text, start, offset - start);
         }
     }
     while (!out.empty() && out.back() == ' ') {
         out.pop_back();
+    }
+
+    bool BaiTokenizer::decode_utf8(
+        const std::string& text,
+        size_t& offset,
+        uint32_t& code_point
+    ) {
+        const auto byte = [&](size_t index) {
+            return static_cast<unsigned char>(text[index]);
+        };
+        const size_t remaining = text.size() - offset;
+        const unsigned char first = byte(offset);
+        size_t width = 0;
+        uint32_t value = 0;
+        if (first <= 0x7f) {
+            width = 1;
+            value = first;
+        } else if (first >= 0xc2 && first <= 0xdf) {
+            width = 2;
+            value = first & 0x1f;
+        } else if (first >= 0xe0 && first <= 0xef) {
+            width = 3;
+            value = first & 0x0f;
+        } else if (first >= 0xf0 && first <= 0xf4) {
+            width = 4;
+            value = first & 0x07;
+        } else {
+            ++offset;
+            return false;
+        }
+        if (remaining < width) {
+            ++offset;
+            return false;
+        }
+        for (size_t i = 1; i < width; ++i) {
+            const unsigned char continuation = byte(offset + i);
+            if ((continuation & 0xc0) != 0x80) {
+                ++offset;
+                return false;
+            }
+            value = (value << 6) | (continuation & 0x3f);
+        }
+        if ((width == 2 && value < 0x80) ||
+            (width == 3 && value < 0x800) ||
+            (width == 4 && value < 0x10000) ||
+            (value > 0x10ffff) ||
+            (value >= 0xd800 && value <= 0xdfff)) {
+            ++offset;
+            return false;
+        }
+        offset += width;
+        code_point = value;
+        return true;
     }
     return out;
 }
@@ -184,6 +249,12 @@ std::expected<void, std::string> BaiTokenizer::load_vocab_json(const std::string
     if (vocab_.find("[CLS]") != vocab_.end()) cls_token_id_ = vocab_["[CLS]"];
     if (vocab_.find("[SEP]") != vocab_.end()) sep_token_id_ = vocab_["[SEP]"];
     if (vocab_.find("[UNK]") != vocab_.end()) unk_token_id_ = vocab_["[UNK]"];
+    if (vocab_.size() != 50257) {
+        return std::unexpected(
+            "Vocabulary must contain 50257 entries; loaded " +
+            std::to_string(vocab_.size()) + " from " + vocab_path
+        );
+    }
     return {};
 }
 

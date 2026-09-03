@@ -78,12 +78,12 @@ public:
      * 5. Attention mask generation
      * 
      * @param text Input text string
-     * @param max_seq_len Maximum sequence length (default 512)
+     * @param max_seq_len Maximum sequence length (default 256)
      * @return std::expected containing TokenizedOutput on success, error on failure
      */
     std::expected<TokenizedOutput, std::string> encode(
         const std::string& text,
-        size_t max_seq_len = 512
+        size_t max_seq_len = 256
     );
 
     /**
@@ -134,6 +134,8 @@ private:
      * Falls back to [UNK] if word not in vocabulary.
      */
     std::vector<int64_t> tokenize_word(const std::string& word) const;
+
+    static bool decode_utf8(const std::string& text, size_t& offset, uint32_t& code_point);
 
     /**
      * Load and parse JSON vocabulary file.
