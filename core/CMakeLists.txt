@@ -34,14 +34,36 @@ add_library(bai_static STATIC ${CORE_SOURCES})
 
 target_include_directories(bai_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Prefer local runtime libraries if a system install is absent.
-set(ONNXRUNTIME_LIB "/home/hima/work/BAI/venv/lib/python3.12/site-packages/onnxruntime/capi/libonnxruntime.so.1.29.0")
+set(ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime installation prefix")
+find_path(ONNXRUNTIME_INCLUDE_DIR
+    NAMES onnxruntime_c_api.h
+    HINTS "${ONNXRUNTIME_ROOT}/include" "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+find_library(ONNXRUNTIME_LIB
+    NAMES onnxruntime
+    HINTS "${ONNXRUNTIME_ROOT}/lib" "${ONNXRUNTIME_ROOT}/lib64"
+)
+if(NOT ONNXRUNTIME_LIB)
+    find_file(ONNXRUNTIME_LIB
+        NAMES libonnxruntime.so.1.29.0
+        HINTS "${ONNXRUNTIME_ROOT}" "${ONNXRUNTIME_ROOT}/lib" "${ONNXRUNTIME_ROOT}/lib64"
+    )
+endif()
+if(NOT ONNXRUNTIME_INCLUDE_DIR OR NOT ONNXRUNTIME_LIB)
+    message(FATAL_ERROR
+        "ONNX Runtime not found. Set ONNXRUNTIME_ROOT or provide "
+        "ONNXRUNTIME_INCLUDE_DIR and ONNXRUNTIME_LIB."
+    )
+endif()
+
+target_include_directories(bai_static PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
 target_link_libraries(bai_static PRIVATE ${ONNXRUNTIME_LIB})
 
 # Python module is optional because the local environment may not expose a CMake config.
 if(pybind11_FOUND)
     pybind11_add_module(bai_core bindings/bai_pybind.cpp ${CORE_SOURCES})
     target_include_directories(bai_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(bai_core PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
     target_link_libraries(bai_core PRIVATE ${ONNXRUNTIME_LIB})
 else()
     message(WARNING "pybind11 not found via CMake; skipping bai_core Python extension target.")

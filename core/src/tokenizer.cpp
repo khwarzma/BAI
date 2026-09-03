@@ -89,8 +89,10 @@ std::string BaiTokenizer::normalize_text(const std::string& text) const {
     while (!out.empty() && out.back() == ' ') {
         out.pop_back();
     }
+    return out;
+}
 
-    bool BaiTokenizer::decode_utf8(
+bool BaiTokenizer::decode_utf8(
         const std::string& text,
         size_t& offset,
         uint32_t& code_point
@@ -142,8 +144,6 @@ std::string BaiTokenizer::normalize_text(const std::string& text) const {
         code_point = value;
         return true;
     }
-    return out;
-}
 
 std::vector<std::string> BaiTokenizer::whitespace_tokenize(const std::string& text) const {
     std::istringstream iss(text);
