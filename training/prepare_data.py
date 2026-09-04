@@ -13,6 +13,22 @@ from tokenizers import Tokenizer
 
 SEQUENCE_LENGTH = 256
 SPLITS = ("train", "val", "test")
+TEXT_KEYS = ("text", "raw_text", "body", "email", "content", "combined_text")
+
+
+def extract_text(record: dict, location: str) -> str | None:
+    """Return raw text when present, or None for pre-tokenized records."""
+    for key in TEXT_KEYS:
+        value = record.get(key)
+        if isinstance(value, str) and value:
+            return value
+    if "input_ids" in record and "attention_mask" in record:
+        return None
+    keys = ", ".join(sorted(record))
+    raise ValueError(
+        f"{location} has no supported raw text or pre-tokenized fields. "
+        f"Available keys: {keys}"
+    )
 
 
 def iter_records(archive: tarfile.TarFile, member_name: str) -> Iterator[dict]:
@@ -24,8 +40,9 @@ def iter_records(archive: tarfile.TarFile, member_name: str) -> Iterator[dict]:
             record = json.loads(raw_line)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ValueError(f"Invalid JSON at {member_name}:{line_number}") from exc
-        if not isinstance(record, dict) or not isinstance(record.get("text"), str):
-            raise ValueError(f"Missing text at {member_name}:{line_number}")
+        if not isinstance(record, dict):
+            raise ValueError(f"Record at {member_name}:{line_number} is not an object")
+        extract_text(record, f"{member_name}:{line_number}")
         yield record
 
 
@@ -45,12 +62,28 @@ def prepare(archive_path: Path, tokenizer_path: Path, output_dir: Path) -> None:
             count = 0
             with target_path.open("w", encoding="utf-8") as target:
                 for record in iter_records(archive, source_name):
-                    encoding = tokenizer.encode(record["text"])
-                    input_ids = encoding.ids[:SEQUENCE_LENGTH]
-                    attention_mask = [1] * len(input_ids)
-                    padding = SEQUENCE_LENGTH - len(input_ids)
-                    input_ids += [pad_id] * padding
-                    attention_mask += [0] * padding
+                    text = extract_text(record, f"{source_name}:{count + 1}")
+                    if text is None:
+                        raw_input_ids = record["input_ids"]
+                        raw_attention_mask = record["attention_mask"]
+                        if (not isinstance(raw_input_ids, list)
+                                or not isinstance(raw_attention_mask, list)):
+                            raise ValueError(f"Invalid pre-tokenized fields at {source_name}:{count + 1}")
+                        if (len(raw_input_ids) > SEQUENCE_LENGTH
+                                or len(raw_attention_mask) > SEQUENCE_LENGTH):
+                            raise ValueError(f"Pre-tokenized record exceeds {SEQUENCE_LENGTH} positions")
+                        input_ids = list(raw_input_ids)
+                        attention_mask = list(raw_attention_mask)
+                        padding = SEQUENCE_LENGTH - len(input_ids)
+                        input_ids += [pad_id] * padding
+                        attention_mask += [0] * padding
+                    else:
+                        encoding = tokenizer.encode(text)
+                        input_ids = encoding.ids[:SEQUENCE_LENGTH]
+                        attention_mask = [1] * len(input_ids)
+                        padding = SEQUENCE_LENGTH - len(input_ids)
+                        input_ids += [pad_id] * padding
+                        attention_mask += [0] * padding
                     prepared = {
                         "input_ids": input_ids,
                         "attention_mask": attention_mask,

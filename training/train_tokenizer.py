@@ -18,6 +18,20 @@ from tokenizers import Tokenizer, decoders, models, pre_tokenizers, processors, 
 ARCHIVE_MEMBER = "data/processed/train.jsonl"
 VOCAB_SIZE = 50_257
 SPECIAL_TOKENS = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
+TEXT_KEYS = ("text", "raw_text", "body", "email", "content", "combined_text")
+
+
+def extract_text(record: dict, location: str) -> str:
+    """Return the first supported raw-text field, with schema diagnostics."""
+    for key in TEXT_KEYS:
+        value = record.get(key)
+        if isinstance(value, str) and value:
+            return value
+    keys = ", ".join(sorted(record))
+    raise ValueError(
+        f"{location} has no raw text field; expected one of {TEXT_KEYS}. "
+        f"Available keys: {keys}. The archive is pre-tokenized-only."
+    )
 
 
 def iter_texts(archive_path: Path) -> Iterator[str]:
@@ -29,7 +43,7 @@ def iter_texts(archive_path: Path) -> Iterator[str]:
         for line_number, raw_line in enumerate(member, start=1):
             try:
                 record = json.loads(raw_line)
-                text = record["text"]
+                text = extract_text(record, f"train.jsonl:{line_number}")
             except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
                 raise ValueError(f"Invalid record at line {line_number}") from exc
             if not isinstance(text, str) or not text:
