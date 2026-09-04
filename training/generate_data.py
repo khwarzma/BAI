@@ -353,7 +353,18 @@ def task_for_dialect(
     state: Dict[str, Any],
     hash_registry: HashRegistry,
 ) -> List[Dict[str, Any]]:
-    language = "ar" if dialect.startswith("ar") else "en"
+    # 1. التحديد الديناميكي للغة والمسار
+    if dialect.startswith("ar"):
+        language = "ar"
+        output_path = RAW_DIR / "ar" / f"{dialect}.jsonl"
+    elif dialect.startswith("en"):
+        language = "en"
+        output_path = RAW_DIR / "en" / f"{dialect}.jsonl"
+    else:
+        # للحالات الخاصة والملفات النمطية العالمية (Global)
+        language = "global"
+        output_path = RAW_DIR / "global" / f"{dialect}.jsonl"
+
     scenarios = [item for item in manifest.get("scenarios_matrix", []) if item.get("category") == category]
     if not scenarios:
         return []
@@ -373,13 +384,10 @@ def task_for_dialect(
     key = f"{dialect}:{category}"
     state.setdefault("dialect_counts", {})
     state["dialect_counts"][key] = state["dialect_counts"].get(key, 0) + len(created_records)
-    state.setdefault("global_counts", {})
-    state["global_counts"][category] = state["global_counts"].get(category, 0) + len(created_records)
 
-    output_path = RAW_DIR / language / f"{dialect}.jsonl"
+    # 2. الكتابة في المسار المحدد فقط (منع التكرار المزدوج)
     append_jsonl(output_path, created_records)
-    global_path = RAW_DIR / "global" / f"{category}.jsonl"
-    append_jsonl(global_path, created_records)
+    
     return created_records
 
 
