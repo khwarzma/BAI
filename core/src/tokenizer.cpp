@@ -258,12 +258,6 @@ std::expected<void, std::string> BaiTokenizer::load_vocab_json(const std::string
     if (vocab_.find("[CLS]") != vocab_.end()) cls_token_id_ = vocab_["[CLS]"];
     if (vocab_.find("[SEP]") != vocab_.end()) sep_token_id_ = vocab_["[SEP]"];
     if (vocab_.find("[UNK]") != vocab_.end()) unk_token_id_ = vocab_["[UNK]"];
-    if (vocab_.size() != 50257) {
-        return std::unexpected(
-            "Vocabulary must contain 50257 entries; loaded " +
-            std::to_string(vocab_.size()) + " from " + vocab_path
-        );
-    }
     return {};
 }
 

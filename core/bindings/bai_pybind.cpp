@@ -3,6 +3,8 @@
 
 #include <span>
 #include <stdexcept>
+#include <mutex>
+#include <unordered_map>
 #include <vector>
 
 #include "bai/engine.hpp"
@@ -56,6 +58,42 @@ PYBIND11_MODULE(bai_core, m) {
                 std::span<const int64_t>(input_ids),
                 std::span<const int64_t>(attention_mask)
             );
+            if (!result) {
+                throw std::runtime_error(result.error());
+            }
+            return result.value();
+        })
+        .def("infer_text", [](BaiEngine& self,
+            const std::string& tokenizer_path,
+            const std::string& text) {
+            if (text.empty()) {
+                throw std::invalid_argument("Input text is empty");
+            }
+
+            // Use the training-time BPE tokenizer so IDs match the model vocabulary.
+            // Keep Python objects alive until process exit; destroying them after
+            // the interpreter shuts down can crash during module teardown.
+            static auto* tokenizer_cache_mutex = new std::mutex();
+            static auto* tokenizer_cache =
+                new std::unordered_map<std::string, py::object>();
+            py::object tokenizer;
+            {
+                std::lock_guard lock(*tokenizer_cache_mutex);
+                auto it = tokenizer_cache->find(tokenizer_path);
+                if (it == tokenizer_cache->end()) {
+                    auto tokenizers = py::module_::import("tokenizers");
+                    it = tokenizer_cache->emplace(
+                        tokenizer_path,
+                        tokenizers.attr("Tokenizer").attr("from_file")(tokenizer_path)
+                    ).first;
+                }
+                tokenizer = it->second;
+            }
+            auto encoding = tokenizer.attr("encode")(text);
+            auto ids = encoding.attr("ids").cast<std::vector<int64_t>>();
+            auto attention_mask = encoding.attr("attention_mask").cast<std::vector<int64_t>>();
+
+            auto result = self.infer(ids, attention_mask);
             if (!result) {
                 throw std::runtime_error(result.error());
             }
