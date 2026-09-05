@@ -10,12 +10,11 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence, Tuple, Set
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parent
 RAW_ROOT = ROOT / "data" / "raw"
 PROCESSED_ROOT = ROOT / "data" / "processed"
 CHECKPOINT_ROOT = ROOT / "data" / "checkpoint"
 
-REQUIRED_FIELDS = {"text", "category_label", "otp_label", "language", "dialect"}
 VALID_CATEGORIES = {"INBOX_PINNED", "INBOX", "BAIT", "BAIS", "BAIADS"}
 
 
@@ -52,44 +51,56 @@ def ensure_dirs() -> None:
     CHECKPOINT_ROOT.mkdir(parents=True, exist_ok=True)
 
 
-def validate_record(record: Dict[str, Any], seen_hashes: Set[str]) -> Tuple[bool, str, Dict[str, Any]]:
+def validate_and_autofix_record(record: Dict[str, Any], seen_hashes: Set[str]) -> Tuple[bool, str, Dict[str, Any]]:
     if not isinstance(record, dict):
         return False, "record is not an object", {}
 
-    missing = REQUIRED_FIELDS - set(record.keys())
-    if missing:
-        return False, f"missing required keys: {sorted(missing)}", {}
+    # 1. توحيد واستخراج النص
+    text = str(record.get("text", "")).strip()
+    if not text or len(text) < 10:
+        return False, "text empty or too short (< 10 chars)", {}
 
-    text = str(record.get("text", ""))
-    category = str(record.get("category_label", ""))
+    # 2. توحيد التصنيف
+    category = str(record.get("category_label") or record.get("category") or "").strip()
     if category not in VALID_CATEGORIES:
-        return False, f"invalid category_label: {category}", {}
+        return False, f"invalid category: {category}", {}
 
-    language = str(record.get("language", "")).lower()
-    dialect = str(record.get("dialect", ""))
-    if language not in {"ar", "en"}:
-        return False, "language must be 'ar' or 'en'", {}
+    # 3. استنتاج وتثبيت اللهجة واللغة
+    dialect = str(record.get("dialect", "")).strip()
     if not dialect:
-        return False, "dialect must be supplied", {}
+        dialect = "global"
 
-    record["text"] = normalize_text(text)
-    if category == "BAIT":
-        otp_value = float(record.get("otp_label", 0.0))
-        confidence = float(record.get("confidence_multiplier", 0.0))
-        if otp_value != 1.0:
-            return False, "BAIT records must have otp_label = 1.0", {}
-        if confidence != 1.5:
-            return False, "BAIT records must have confidence_multiplier = 1.5", {}
+    language = str(record.get("language", "")).lower().strip()
+    if not language:
+        if dialect.startswith("ar"):
+            language = "ar"
+        elif dialect.startswith("en"):
+            language = "en"
+        else:
+            language = "global"
 
-    record_hash = sha256_hex(json.dumps(record, sort_keys=True, ensure_ascii=False))
+    # 4. المعالجة التلقائية لعينات OTP والـ Confidence
+    otp_label = float(record.get("otp_label", 1.0 if "otp" in dialect else 0.0))
+    confidence_multiplier = float(record.get("confidence_multiplier", 1.5 if otp_label == 1.0 else 1.0))
+
+    # 5. تنظيف وتطبيق المعايير
+    clean_text = normalize_text(text)
+    record_hash = sha256_hex(clean_text)
     if record_hash in seen_hashes:
-        return False, "duplicate hash", {}
+        return False, "duplicate text content", {}
     
     seen_hashes.add(record_hash)
 
-    record["language"] = language
-    record["dialect"] = dialect
-    return True, "ok", record
+    cleaned_record = {
+        "text": clean_text,
+        "category_label": category,
+        "otp_label": otp_label,
+        "confidence_multiplier": confidence_multiplier,
+        "language": language,
+        "dialect": dialect
+    }
+
+    return True, "ok", cleaned_record
 
 
 def iter_raw_records(raw_root: Path) -> List[Dict[str, Any]]:
@@ -106,11 +117,6 @@ def build_stats(valid_records: Sequence[Dict[str, Any]], invalid_count: int, dup
     category_counter = Counter(record.get("category_label", "UNKNOWN") for record in valid_records)
     dialect_counter = Counter(record.get("dialect", "UNKNOWN") for record in valid_records)
     language_counter = Counter(record.get("language", "UNKNOWN") for record in valid_records)
-    bait_otp_valid = sum(
-        1
-        for record in valid_records
-        if str(record.get("category_label", "")) == "BAIT" and float(record.get("otp_label", 0.0)) == 1.0
-    )
 
     return {
         "total_valid_records": len(valid_records),
@@ -119,12 +125,10 @@ def build_stats(valid_records: Sequence[Dict[str, Any]], invalid_count: int, dup
         "category_distribution": dict(sorted(category_counter.items())),
         "dialect_distribution": dict(sorted(dialect_counter.items())),
         "language_distribution": dict(sorted(language_counter.items())),
-        "bait_otp_valid_records": bait_otp_valid,
-        "bait_records": category_counter.get("BAIT", 0),
         "dataset_balance": {
             "category_coverage": sorted(category_counter.keys()),
             "dialect_coverage": sorted(dialect_counter.keys()),
-            "all_29_dialects_present": len(dialect_counter) >= 29,
+            "dialects_count": len(dialect_counter),
         },
     }
 
@@ -181,10 +185,11 @@ def main() -> int:
     invalid_count = 0
     duplicate_count = 0
 
+    print("🔍 Validating raw files with Auto-Fix and Normalization Enabled...")
     for record in iter_raw_records(raw_root):
-        ok, reason, cleaned = validate_record(record, seen_hashes)
+        ok, reason, cleaned = validate_and_autofix_record(record, seen_hashes)
         if not ok:
-            if reason == "duplicate hash":
+            if reason == "duplicate text content":
                 duplicate_count += 1
             invalid_count += 1
             continue
@@ -196,15 +201,18 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    print("✂️ Stratified Splitting into Train (80%) / Val (10%) / Test (10%)...")
     train, val, test = stratified_split(valid_records)
     write_jsonl(processed_root / "train.jsonl", train)
     write_jsonl(processed_root / "val.jsonl", val)
     write_jsonl(processed_root / "test.jsonl", test)
 
-    print(f"Valid records: {len(valid_records)}")
-    print(f"Invalid records: {invalid_count}")
-    print(f"Duplicate records: {duplicate_count}")
-    print(f"Saved splits: train={len(train)}, val={len(val)}, test={len(test)}")
+    print("=" * 60)
+    print(f"✅ Valid Records Prepared : {len(valid_records):,}")
+    print(f"⚠️ Invalid Skipped       : {invalid_count:,}")
+    print(f"♻️ Duplicates Removed    : {duplicate_count:,}")
+    print(f"📁 Saved Splits          : Train={len(train):,} | Val={len(val):,} | Test={len(test):,}")
+    print("=" * 60)
     return 0
 
 

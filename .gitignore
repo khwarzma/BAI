@@ -49,3 +49,4 @@ models/*
 data/processed/*.jsonl
 tmp_data_check/
 BAI_V1_*.md
+BAI_V1.1_*.md
